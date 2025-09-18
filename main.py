@@ -36,7 +36,8 @@ def click_enter(timeout: int=5):
 def main():
     open_website("https://lingos.pl")
 
-    input("Press ENTER to continue: ") # for debugging
+    print("Log in to the website and go to the learing page")
+    input("Press ENTER after logging in: ")
 
     while True:
         # Get the task type
