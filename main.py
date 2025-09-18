@@ -38,67 +38,68 @@ def main():
 
     input("Press ENTER to continue: ") # for debugging
 
-    # Get the task type
-    try:
-        question_type = driver.find_element(By.ID, "flashcard_title_text")
-        if question_type:
-            print(question_type.text[:100])
-        else:
-            print("No body element found")
-    except Exception as e:
-        print(f"Error: {e}")
-
-    if question_type.text[:100] == "Przetłumacz:":
-        print("Type: translate")
-
-        # Get the task content
+    while True:
+        # Get the task type
         try:
-            question_content = driver.find_element(By.ID, "flashcard_main_text")
+            question_type = driver.find_element(By.ID, "flashcard_title_text")
+            if question_type:
+                print(question_type.text[:100])
+            else:
+                print("No body element found")
+        except Exception as e:
+            print(f"Error: {e}")
+    
+        if question_type.text[:100] == "Przetłumacz:":
+            print("Type: translate")
+    
+            # Get the task content
+            try:
+                question_content = driver.find_element(By.ID, "flashcard_main_text")
+                if question_content:
+                    print(f"To translate: {question_content.text[:100]}")
+                else:
+                    print("No body element found")
+            except Exception as e:
+                print(f"Error: {e}")
+
+        # TODO: Fuction to manage a translation database
+
+        # Click the Enter button to get the translation
+        click_enter(5)
+
+        # Actually get the translation
+        try:
+            translation_content = driver.find_element(By.ID, "flashcard_error_correct")
             if question_content:
-                print(f"To translate: {question_content.text[:100]}")
+                translation = translation_content.text[:500]
+                print(f"Translation: {translation_content.text[:500]}")
             else:
                 print("No body element found")
         except Exception as e:
             print(f"Error: {e}")
 
-    # TODO: Fuction to manage a translation database
+        # Get back to the task
+        click_enter(5)
 
-    # Click the Enter button to get the translation
-    click_enter(5)
+        # Enter the translation into the answer box, no seperate function
+        timeout = 5
+        try:
+            answer_box = WebDriverWait(driver, timeout).until(
+                EC.presence_of_element_located((By.ID, "flashcard_answer_input"))
+            )
+            if not answer_box.is_enabled():
+                print("Answer box is not enabled")
 
-    # Actually get the translation
-    try:
-        translation_content = driver.find_element(By.ID, "flashcard_error_correct")
-        if question_content:
-            translation = translation_content.text[:500]
-            print(f"Translation: {translation_content.text[:500]}")
-        else:
-            print("No body element found")
-    except Exception as e:
-        print(f"Error: {e}")
+            answer_box.send_keys(translation)
+            print("Translation entered")
 
-    # Get back to the task
-    click_enter(5)
+        except Exception as e:
+            print(f"Error: {e}")
 
-    # Enter the translation into the answer box, no seperate function
-    timeout = 5
-    try:
-        answer_box = WebDriverWait(driver, timeout).until(
-            EC.presence_of_element_located((By.ID, "flashcard_answer_input"))
-        )
-        if not answer_box.is_enabled():
-            print("Answer box is not enabled")
-
-        answer_box.send_keys(translation)
-        print("Translation entered")
-
-    except Exception as e:
-        print(f"Error: {e}")
-
-    # Click Enter 2 times to get to the next question
-    click_enter(5)
-    time.sleep(2)
-    click_enter(5)
+        # Click Enter 2 times to get to the next question
+        click_enter(5)
+        time.sleep(2)
+        click_enter(5)
 
 
 if __name__ == "__main__":
