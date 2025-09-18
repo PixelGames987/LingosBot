@@ -5,6 +5,7 @@ import time
 
 
 def open_website(url: str):
+    global driver
     try:
         options = Options()
         options.add_argument("--no-sandbox")
@@ -12,17 +13,39 @@ def open_website(url: str):
 
         driver.get(url) # opens the link
 
-        time.sleep(5) # temporary browser open time
-
     except Exception as e:
         print(f"Error: {e}")
 
-    finally:
-        if 'driver' in locals() and driver: # Checks if the driver is present
-            driver.quit()
-
+        
 def main():
-    pass
+    open_website("https://lingos.pl")
+
+    input("Press ENTER to continue: ") # for debugging
+
+    try:
+        question_type = driver.find_element(By.ID, "flashcard_title_text")
+        if question_type:
+            print(question_type.text[:100])
+        else:
+            print("No body element found")
+    except Exception as e:
+        print(f"Error: {e}")
+
+    if question_type.text[:100] == "Przetłumacz:":
+        print("Type: translate")
+        try:
+            question_content = driver.find_element(By.ID, "flashcard_main_text")
+            if question_content:
+                print(f"To translate: {question_content.text[:100]}")
+            else:
+                print("No body element found")
+        except Exception as e:
+            print(f"Error: {e}")
+
+        
+
+
+
 
 if __name__ == "__main__":
-    open_website("https://google.com")
+    main()
