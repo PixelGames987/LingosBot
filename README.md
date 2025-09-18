@@ -16,7 +16,7 @@ Run with ./start.sh
 ## Setup on Windows:
 ```
 Install Python (newest), git and Firefox
-Open cmd and go the desktop
+Open cmd and go to the desktop
 
 git clone https://github.com/PixelGames987/LingosBot
 cd LingosBot
