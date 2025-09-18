@@ -19,6 +19,19 @@ def open_website(url: str):
     except Exception as e:
         print(f"Error: {e}")
 
+
+def click_enter(timeout: int=5):
+    try:
+        enter_button = WebDriverWait(driver, timeout).until(
+            EC.element_to_be_clickable((By.ID, "enterBtn"))
+        )
+        enter_button.click()
+        print("Clicked the Enter button")
+    except Exception as e:
+        print(f"Error: {e}")
+
+    time.sleep(2) # Wait for the website to change the url
+
         
 def main():
     open_website("https://lingos.pl")
@@ -51,19 +64,9 @@ def main():
     # TODO: Fuction to manage a translation database
 
     # Click the Enter button to get the translation
-    timeout = 5
+    click_enter(5)
 
-    try:
-        enter_button = WebDriverWait(driver, timeout).until(
-            EC.element_to_be_clickable((By.ID, "enterBtn"))
-        )
-        enter_button.click()
-        print("Clicked the Enter button")
-    except Exception as e:
-        print(f"Error: {e}")
-
-    time.sleep(2) # Wait for the website to change the url
-
+    
     try:
         translation_content = driver.find_element(By.ID, "flashcard_error_correct")
         if question_content:
