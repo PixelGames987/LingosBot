@@ -6,6 +6,8 @@ from selenium.webdriver.support import expected_conditions as EC
 
 import time
 
+# TODO: Fuction to manage a translation database
+
 
 def open_website(url: str):
     global driver
@@ -32,12 +34,62 @@ def click_enter(timeout: int=5):
 
     time.sleep(2) # Wait for the website to change the url
 
+
+def translate_without_word():
+    # Get the word to translate
+    try:
+        question_content = driver.find_element(By.ID, "flashcard_main_text")
+        if question_content:
+            print(f"To translate: {question_content.text[:100]}")
+        else:
+            print("No body element found")
+    except Exception as e:
+        print(f"Error: {e}")
+
+    # Click the Enter button to get the translation
+    click_enter(5)
+
+    # Actually get the translation
+    try:
+        translation_content = driver.find_element(By.ID, "flashcard_error_correct")
+        if question_content:
+            translation = translation_content.text[:500]
+            print(f"Translation: {translation_content.text[:500]}")
+        else:
+            print("No body element found")
+    except Exception as e:
+        print(f"Error: {e}")
+
+    # Get back to the task
+    click_enter(5)
+
+    # Enter the translation into the answer box, no seperate function
+    timeout = 5
+    try:
+        answer_box = WebDriverWait(driver, timeout).until(
+            EC.presence_of_element_located((By.ID, "flashcard_answer_input"))
+        )
+        if not answer_box.is_enabled():
+            print("Answer box is not enabled")
+
+        answer_box.send_keys(translation)
+        print("Translation entered")
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+    # Click Enter 2 times to get to the next question
+    click_enter(5)
+    time.sleep(2)
+    click_enter(5)
+
+
         
 def main():
     open_website("https://lingos.pl")
 
     print("Log in to the website and go to the learing page")
-    input("Press ENTER after logging in: ")
+    input("Press ENTER after the lesson is loaded: ")
 
     while True:
         # Get the task type
@@ -49,59 +101,12 @@ def main():
                 print("No body element found")
         except Exception as e:
             print(f"Error: {e}")
+
     
         if question_type.text[:100] == "Przetłumacz:":
             print("Type: translate")
-    
-            # Get the task content
-            try:
-                question_content = driver.find_element(By.ID, "flashcard_main_text")
-                if question_content:
-                    print(f"To translate: {question_content.text[:100]}")
-                else:
-                    print("No body element found")
-            except Exception as e:
-                print(f"Error: {e}")
-
-        # TODO: Fuction to manage a translation database
-
-        # Click the Enter button to get the translation
-        click_enter(5)
-
-        # Actually get the translation
-        try:
-            translation_content = driver.find_element(By.ID, "flashcard_error_correct")
-            if question_content:
-                translation = translation_content.text[:500]
-                print(f"Translation: {translation_content.text[:500]}")
-            else:
-                print("No body element found")
-        except Exception as e:
-            print(f"Error: {e}")
-
-        # Get back to the task
-        click_enter(5)
-
-        # Enter the translation into the answer box, no seperate function
-        timeout = 5
-        try:
-            answer_box = WebDriverWait(driver, timeout).until(
-                EC.presence_of_element_located((By.ID, "flashcard_answer_input"))
-            )
-            if not answer_box.is_enabled():
-                print("Answer box is not enabled")
-
-            answer_box.send_keys(translation)
-            print("Translation entered")
-
-        except Exception as e:
-            print(f"Error: {e}")
-
-        # Click Enter 2 times to get to the next question
-        click_enter(5)
-        time.sleep(2)
-        click_enter(5)
-
+            translate_without_word()
+        
 
 if __name__ == "__main__":
     main()
