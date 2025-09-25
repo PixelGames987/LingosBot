@@ -34,7 +34,7 @@ def click_enter(timeout: int=5):
     time.sleep(2) # Wait for the website to change the url
 
 
-def add_db(question: str, answer:str):
+def add_db(question: str, answer: str):
     new_entry = {question: answer}
     print(new_entry)
 
@@ -48,7 +48,15 @@ def add_db(question: str, answer:str):
 
 
 def query_db(question: str):
-    pass
+    with open("db.json", "r") as db_file:
+        data = json.load(db_file)
+        print(data)
+        for entry in data.get("lingos", []):
+            print(entry)
+            if question in entry:
+                return entry[question]
+        
+        return None
 
 
 def translate_without_word():
@@ -126,3 +134,4 @@ def main():
 
 if __name__ == "__main__":
     add_db("test_question", "test_answer")
+    print(query_db("test_question"))
