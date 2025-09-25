@@ -1,6 +1,8 @@
 @echo off
 setlocal
 
+echo {"lingos": []} > db.json
+
 python -m venv venv
 
 call venv\Scripts\activate

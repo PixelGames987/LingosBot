@@ -5,8 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 import time
-
-# TODO: Fuction to manage a translation database
+import json
 
 
 def open_website(url: str):
@@ -33,6 +32,23 @@ def click_enter(timeout: int=5):
         print(f"Error: {e}")
 
     time.sleep(2) # Wait for the website to change the url
+
+
+def add_db(question: str, answer:str):
+    new_entry = {question: answer}
+    print(new_entry)
+
+    with open("db.json", "r+") as db_file:
+        data = json.load(db_file)
+        data["lingos"].append(new_entry)
+        db_file.seek(0) # Move pointer to start of file
+        json.dump(data, db_file, indent=4)
+        db_file.truncate() # Remove existing data
+
+
+
+def query_db(question: str):
+    pass
 
 
 def translate_without_word():
@@ -109,4 +125,4 @@ def main():
         
 
 if __name__ == "__main__":
-    main()
+    add_db("test_question", "test_answer")
