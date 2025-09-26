@@ -5,8 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 import time
-
-# TODO: Fuction to manage a translation database
+import json
 
 
 def open_website(url: str):
@@ -35,6 +34,31 @@ def click_enter(timeout: int=5):
     time.sleep(2) # Wait for the website to change the url
 
 
+def add_db(question: str, answer: str):
+    new_entry = {question: answer}
+    print(new_entry)
+
+    with open("db.json", "r+") as db_file:
+        data = json.load(db_file)
+        data["lingos"].append(new_entry)
+        db_file.seek(0) # Move pointer to start of file
+        json.dump(data, db_file, indent=4)
+        db_file.truncate() # Remove existing data
+
+
+
+def query_db(question: str):
+    with open("db.json", "r") as db_file:
+        data = json.load(db_file)
+        print(data)
+        for entry in data.get("lingos", []):
+            print(entry)
+            if question in entry:
+                return entry[question]
+        
+        return None
+
+
 def translate_without_word():
     # Get the word to translate
     try:
@@ -46,22 +70,27 @@ def translate_without_word():
     except Exception as e:
         print(f"Error: {e}")
 
-    # Click the Enter button to get the translation
-    click_enter(5)
+    translation_from_db = query_db(question_content)
+    if translation_from_db == None:
+        # Click the Enter button to get the translation
+        click_enter(5)
 
-    # Actually get the translation
-    try:
-        translation_content = driver.find_element(By.ID, "flashcard_error_correct")
-        if question_content:
-            translation = translation_content.text[:500]
-            print(f"Translation: {translation_content.text[:500]}")
-        else:
-            print("No body element found")
-    except Exception as e:
-        print(f"Error: {e}")
+        # Actually get the translation
+        try:
+            translation_content = driver.find_element(By.ID, "flashcard_error_correct")
+            if question_content:
+                translation = translation_content.text[:500]
+                add_db(question_content.text[:100], translation)
+                print(f"Translation: {translation_content.text[:500]}")
+            else:
+                print("No body element found")
+        except Exception as e:
+            print(f"Error: {e}")
 
-    # Get back to the task
-    click_enter(5)
+        # Get back to the task
+        click_enter(5)
+    else:
+        translaton = translation_from_db
 
     # Enter the translation into the answer box, no seperate function
     timeout = 5
