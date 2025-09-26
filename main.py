@@ -70,22 +70,27 @@ def translate_without_word():
     except Exception as e:
         print(f"Error: {e}")
 
-    # Click the Enter button to get the translation
-    click_enter(5)
+    translation_from_db = query_db(question_content)
+    if translation_from_db == None:
+        # Click the Enter button to get the translation
+        click_enter(5)
 
-    # Actually get the translation
-    try:
-        translation_content = driver.find_element(By.ID, "flashcard_error_correct")
-        if question_content:
-            translation = translation_content.text[:500]
-            print(f"Translation: {translation_content.text[:500]}")
-        else:
-            print("No body element found")
-    except Exception as e:
-        print(f"Error: {e}")
+        # Actually get the translation
+        try:
+            translation_content = driver.find_element(By.ID, "flashcard_error_correct")
+            if question_content:
+                translation = translation_content.text[:500]
+                add_db(question_content.text[:100], translation)
+                print(f"Translation: {translation_content.text[:500]}")
+            else:
+                print("No body element found")
+        except Exception as e:
+            print(f"Error: {e}")
 
-    # Get back to the task
-    click_enter(5)
+        # Get back to the task
+        click_enter(5)
+    else:
+        translaton = translation_from_db
 
     # Enter the translation into the answer box, no seperate function
     timeout = 5
@@ -133,5 +138,4 @@ def main():
         
 
 if __name__ == "__main__":
-    add_db("test_question", "test_answer")
-    print(query_db("test_question"))
+    main()
