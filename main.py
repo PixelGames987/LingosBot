@@ -6,6 +6,8 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 import json
 
+FORCE_WAIT_SEC = 0 # Wait between actions for debugging
+
 # Global driver
 driver = None
 
@@ -23,6 +25,7 @@ def open_website(url: str):
         raise
 
 def wait_for_element(by_strategy, value, timeout=10, condition=EC.presence_of_element_located):
+    time.sleep(FORCE_WAIT_SEC)
     try:
         return WebDriverWait(driver, timeout).until(condition((by_strategy, value)))
     except Exception as e:
@@ -30,6 +33,7 @@ def wait_for_element(by_strategy, value, timeout=10, condition=EC.presence_of_el
         raise
 
 def click_enter(timeout: int = 5, wait_for_next_element_id: str = None):
+    time.sleep(FORCE_WAIT_SEC)
     try:
         enter_button = wait_for_element(By.ID, "enterBtn", timeout, EC.element_to_be_clickable)
         enter_button.click()
@@ -44,6 +48,7 @@ def click_enter(timeout: int = 5, wait_for_next_element_id: str = None):
         print(f"Error in click_enter: {e}")
 
 def add_db(question: str, answer: str):
+    time.sleep(FORCE_WAIT_SEC)
     question_str = question.text if hasattr(question, 'text') else str(question)
     answer_str = answer.text if hasattr(answer, 'text') else str(answer)
 
@@ -64,6 +69,7 @@ def add_db(question: str, answer: str):
         print(f"Error adding to DB: {e}")
 
 def query_db(question: str):
+    time.sleep(FORCE_WAIT_SEC)
     question_str = question.text if hasattr(question, 'text') else str(question)
     try:
         with open("db.json", "r") as db_file:
@@ -84,6 +90,7 @@ def query_db(question: str):
         return None
 
 def translate_without_word():
+    time.sleep(FORCE_WAIT_SEC)
     # Get the word to translate (the question)
     try:
         question_content_element = wait_for_element(By.ID, "flashcard_main_text", 10, EC.visibility_of_element_located)
