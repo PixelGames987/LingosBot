@@ -3,12 +3,11 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
 import time
 import json
-import sys
 
 FORCE_WAIT_SEC = 0 # Wait between actions for debugging
+
 # Global driver
 driver = None
 
@@ -17,13 +16,11 @@ def open_website(url: str):
     try:
         options = Options()
         options.add_argument("--no-sandbox")
-        # Add a common user-agent to avoid detection
-        options.set_preference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0")
         driver = webdriver.Firefox(options=options)
         driver.get(url)
     except Exception as e:
         print(f"Error opening website: {e}")
-        if driver:
+        if driver: 
             driver.quit()
         raise
 
@@ -35,20 +32,26 @@ def wait_for_element(by_strategy, value, timeout=10, condition=EC.presence_of_el
         print(f"Error waiting for element '{value}': {e}")
         raise
 
-def click_enter_button_only(timeout: int = 5):
+def click_enter(timeout: int = 5, wait_for_next_element_id: str = None):
     time.sleep(FORCE_WAIT_SEC)
     try:
         enter_button = wait_for_element(By.ID, "enterBtn", timeout, EC.element_to_be_clickable)
         enter_button.click()
         print("Clicked the Enter button")
+
+        if wait_for_next_element_id:
+            print(f"Waiting for element '{wait_for_next_element_id}' to appear after click...")
+            wait_for_element(By.ID, wait_for_next_element_id, timeout, EC.visibility_of_element_located)
+            print(f"Element '{wait_for_next_element_id}' is visible.")
+
     except Exception as e:
-        print(f"Error clicking Enter button: {e}")
-        raise
+        print(f"Error in click_enter: {e}")
 
 def add_db(question: str, answer: str):
     time.sleep(FORCE_WAIT_SEC)
     question_str = question.text if hasattr(question, 'text') else str(question)
     answer_str = answer.text if hasattr(answer, 'text') else str(answer)
+
     new_entry = {question_str: answer_str}
     print(f"Adding to DB: {new_entry}")
     try:
@@ -71,7 +74,9 @@ def query_db(question: str):
     try:
         with open("db.json", "r") as db_file:
             data = json.load(db_file)
+            # print(f"DB data: {data}") # Too verbose, uncomment for debugging
             for entry in data.get("lingos", []):
+                # print(f"Checking entry: {entry}") # Too verbose, uncomment for debugging
                 if question_str in entry:
                     print(f"Found translation for '{question_str}' in DB.")
                     return entry[question_str]
@@ -86,9 +91,10 @@ def query_db(question: str):
 
 def translate_without_word():
     time.sleep(FORCE_WAIT_SEC)
+    # Get the word to translate (the question)
     try:
         question_content_element = wait_for_element(By.ID, "flashcard_main_text", 10, EC.visibility_of_element_located)
-        question_text = question_content_element.text.strip()[:100] # Use .strip() for clean comparison
+        question_text = question_content_element.text[:100]
         print(f"To translate: {question_text}")
     except Exception as e:
         print(f"Could not get question content: {e}")
@@ -98,110 +104,67 @@ def translate_without_word():
     translation_to_enter = None
 
     if translation_from_db is None:
-        print("Translation not in DB. Revealing answer on page.")
-        # Click the Enter button to reveal the translation
+        # Click the Enter button to get the translation
+        # Wait for 'flashcard_error_correct' (translation element) to become visible
+        click_enter(5, wait_for_next_element_id="flashcard_error_correct")
+
+        # Actually get the translation from the page
         try:
-            click_enter_button_only(5)
-            # Wait for the translation to appear (flashcard_error_correct)
             translation_content_element = wait_for_element(By.ID, "flashcard_error_correct", 5, EC.visibility_of_element_located)
-            translation_on_page = translation_content_element.text.strip()[:500]
-            add_db(question_text, translation_on_page)
+            translation_on_page = translation_content_element.text[:500]
+            add_db(question_text, translation_on_page) # Use the string text for DB
             print(f"Translation from page: {translation_on_page}")
             translation_to_enter = translation_on_page
         except Exception as e:
-            print(f"Could not get translation from page after click: {e}")
-            try:
-                print("Attempting to click Enter to move past failed translation retrieval.")
-                click_enter_button_only(5)
-                click_enter_button_only(5) 
-            except Exception as ex:
-                print(f"Failed to click Enter after translation retrieval error: {ex}")
+            print(f"Could not get translation from page: {e}")
             return # Exit if we can't get the translation
-
-        print("Clicking Enter to dismiss correction/proceed to answer input if needed.")
-        click_enter_button_only(5)
-
-    else: # Translation found in DB
+        
+        click_enter(5, wait_for_next_element_id="flashcard_answer_input")
+    else:
         translation_to_enter = translation_from_db
         print(f"Using translation from DB: {translation_to_enter}")
 
     if not translation_to_enter:
-        print("No translation available to enter. This should not happen if DB or page provided it.")
+        print("No translation available to enter.")
         return
 
     # Enter the translation into the answer box
     try:
         answer_box = wait_for_element(By.ID, "flashcard_answer_input", 10, EC.element_to_be_clickable)
-        if not answer_box.is_displayed() or not answer_box.is_enabled():
-            print("Answer box is not displayed or enabled, assuming auto-corrected or moved on.")
-            click_enter_button_only(5)
-            return
-
+        if not answer_box.is_enabled():
+            print("Answer box is not enabled, attempting to enable or proceed.")
         answer_box.send_keys(translation_to_enter)
         print("Translation entered")
-    except TimeoutException:
-        print(f"Timeout: Answer box 'flashcard_answer_input' not found or not clickable.")
-        print("Attempting to click Enter to move to next card, as input wasn't possible.")
-        try:
-            click_enter_button_only(5)
-            click_enter_button_only(5) # Try double-click to ensure progression
-        except Exception as ex:
-            print(f"Failed to click Enter after answer box issue: {ex}")
-        return
     except Exception as e:
-        print(f"Error entering translation into answer box: {e}")
+        print(f"Error entering translation: {e}")
         return
 
-    # Click Enter to submit the answer
-    print("Clicking Enter to submit answer.")
-    click_enter_button_only(5)
+    # Click Enter 2 times to get to the next question
+    # First click to submit the answer
+    click_enter(5, wait_for_next_element_id="flashcard_error_correct")
+    click_enter(5, wait_for_next_element_id="flashcard_main_text")
     
-    try:
-        wait_for_element(By.ID, "flashcard_error_correct", 5, EC.visibility_of_element_located)
-        print("Correction/feedback visible.")
-    except TimeoutException:
-        print(f"Did not find correction/feedback element ('flashcard_error_correct') after submitting answer within 5s. Page might have moved on or different feedback.")
-    except Exception as e:
-        print(f"Error checking for correction/feedback: {e}")
-    
-    # Click Enter again to move to the next question/card
-    print("Clicking Enter to move to the next card.")
-    click_enter_button_only(5)
 
 def new_word(native: str, foreign: str):
     time.sleep(FORCE_WAIT_SEC)
-    add_db(foreign, native) 
-    print("Clicking Enter to dismiss new word card.")
-    click_enter_button_only(5) 
+    add_db(native, foreign)
+    click_enter(5)
+    
 
 def main():
-    global driver
+    global driver # Declare driver as global
     try:
         open_website("https://lingos.pl")
         print("Log in to the website and go to the learning page (e.g., 'Learn' section).")
         input("Press ENTER after the lesson is loaded: ")
         
-        # Initial check to ensure we are on a valid flashcard state
-        try:
-            WebDriverWait(driver, 10).until(
-                EC.any_of(
-                    EC.visibility_of_element_located((By.ID, "flashcard_title_text")),
-                    EC.visibility_of_element_located((By.XPATH, "//span[normalize-space(text())='Nowe słowo!']"))
-                )
-            )
-            print("Successfully found an initial task or new word.")
-        except TimeoutException:
-            print("Initial wait for task/new word timed out. Check if lesson is loaded correctly.")
-            sys.exit(1)
-
-
         while True:
             # Define conditions for elements
             flashcard_title_condition = EC.visibility_of_element_located((By.ID, "flashcard_title_text")) # Translate task
             new_word_span_condition = EC.visibility_of_element_located((By.XPATH, "//span[normalize-space(text())='Nowe słowo!']")) # New word
-            
+
             try:
-                print("\nWaiting for a task or new word (max 20s)")
+                print("\nWaiting for a task or new word")
                 found_element = WebDriverWait(driver, 20).until(
                     EC.any_of(flashcard_title_condition, new_word_span_condition)
                 )
@@ -209,35 +172,40 @@ def main():
                 if found_element.get_attribute("id") == "flashcard_title_text":
                     question_type_text = found_element.text.strip()[:100]
                     print(f"Current Task identified: '{question_type_text}'")
+
                     if question_type_text == "Przetłumacz:":
                         print("Type: translate")
                         translate_without_word()
                     else:
                         print(f"Unknown task type: '{question_type_text}'. Stopping...")
                         sys.exit(1)
-                elif found_element.tag_name == "span" and "NOWE SŁOWO!" in found_element.text.strip().upper():
+
+                elif found_element.tag_name == "span" and "NOWE SŁOWO!" in found_element.text.strip():
                     print("A new word found.")
-                    foreign = wait_for_element(By.ID, "new_teacher_main_text", 5, EC.visibility_of_element_located)
-                    foreign_text = foreign.text.strip()[:500]
+                    foreign = wait_for_element(By.ID, "new_teacher_main_text", 5, EC.visibility_of_element_located) # Wait is not needed here, but it's easier to reuse some code
+                    foreign_text = foreign.text[:500]
 
                     native = wait_for_element(By.ID, "new_teacher_additional_text", 5, EC.visibility_of_element_located)
-                    native_text = native.text.strip()[:500]
+                    native_text = native.text[:500]
 
-                    new_word(native_text, foreign_text) # Call new_word with collected data
+                    new_word(native_text, foreign_text)
+
                 else:
                     print(f"Unexpected element found: Tag={found_element.tag_name}, ID={found_element.get_attribute('id')}, Text='{found_element.text.strip()[:50]}'")
                     print("Breaking loop due to unhandled element type.")
                     break
+
             except TimeoutException:
-                print("Timeout waiting for task (20s). Assuming lesson finished or an issue occurred.")
-                break # Exit loop if no element appears after 20 seconds
+                print("Timeout waiting for task. Assuming lesson finished or an issue occurred.")
+                break
             except (NoSuchElementException, StaleElementReferenceException) as e:
                 print(f"Element issue (stale/not found) in main loop: {e}. Retrying...")
-                time.sleep(1) # Short delay before retrying
-                continue
+                time.sleep(1) 
+                continue 
             except Exception as e:
                 print(f"An unexpected error occurred in the main loop: {e}")
                 break # Exit loop for other errors
+
     except Exception as e:
         print(f"An error occurred in main execution: {e}")
     finally:
@@ -245,14 +213,14 @@ def main():
             print("Quitting browser...")
             driver.quit()
             print("Browser closed.")
-
+        
+        
+    
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(f"An error occurred in the script's main execution block: {e}")
+        print(f"An error occurred in main execution: {e}")
     finally:
         if driver:
-            if driver.session_id: # Check if session is still active
-                driver.quit()
-
+            driver.quit()

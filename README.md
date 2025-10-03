@@ -26,4 +26,4 @@ Run with start.bat
 ```
 
 ### Issues:
-Currently the bot sometimes hangs for a few seconds when a new word is detected.
+The bot doesn't detect when the lesson ends to start a new one
