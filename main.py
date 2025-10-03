@@ -145,35 +145,65 @@ def translate_without_word():
     click_enter(5, wait_for_next_element_id="flashcard_main_text")
 
 def main():
-    open_website("https://lingos.pl")
-    print("Log in to the website and go to the learning page (e.g., 'Learn' section).")
-    input("Press ENTER after the lesson is loaded: ")
-    
-    # Initial wait for the first question type to appear
-    initial_question_type_element = wait_for_element(By.ID, "flashcard_title_text", 30, EC.visibility_of_element_located)
-    print(f"Initial question type: {initial_question_type_element.text[:100]}")
-
-    while True:
-        # Get the task type
-        try:
-            question_type_element = wait_for_element(By.ID, "flashcard_title_text", 10, EC.visibility_of_element_located)
-            question_type_text = question_type_element.text[:100]
-            print(f"\nCurrent Task: {question_type_text}")
-        except Exception as e:
-            print(f"Error getting question type, breaking loop: {e}")
-            break # Exit loop if we can't determine the question type
-
-        if question_type_text == "Przetłumacz:":
-            print("Type: translate")
-            translate_without_word()
-        else:
-            print(f"Unknown task type: {question_type_text}. Skipping.")
-            sys.exit(1)
+    global driver # Declare driver as global
+    try:
+        open_website("https://lingos.pl")
+        print("Log in to the website and go to the learning page (e.g., 'Learn' section).")
+        input("Press ENTER after the lesson is loaded: ")
         
-    if driver:
-        driver.quit()
-        print("Browser closed.")
+        while True:
+            # Define conditions for elements
+            flashcard_title_condition = EC.visibility_of_element_located((By.ID, "flashcard_title_text")) # Translate task
+            new_word_span_condition = EC.visibility_of_element_located((By.XPATH, "//span[normalize-space(text())='Nowe słowo!']")) # New word
 
+            try:
+                print("\nWaiting for a task or new word")
+                found_element = WebDriverWait(driver, 20).until(
+                    EC.any_of(flashcard_title_condition, new_word_span_condition)
+                )
+
+                if found_element.get_attribute("id") == "flashcard_title_text":
+                    question_type_text = found_element.text.strip()[:100]
+                    print(f"Current Task identified: '{question_type_text}'")
+
+                    if question_type_text == "Przetłumacz:":
+                        print("Type: translate")
+                        translate_without_word()
+                    else:
+                        print(f"Unknown task type: '{question_type_text}'. Stopping...")
+                        sys.exit(1)
+
+                elif found_element.tag_name == "span" and "NOWE SŁOWO!" in found_element.text.strip():
+                    print("A new word found.")
+                    time.sleep(100)
+                else:
+                    print(f"Unexpected element found: Tag={found_element.tag_name}, ID={found_element.get_attribute('id')}, Text='{found_element.text.strip()[:50]}'")
+                    print("Breaking loop due to unhandled element type.")
+                    break
+
+            except TimeoutException:
+                print("Timeout waiting for task. Assuming lesson finished or an issue occurred.")
+                break
+            except (NoSuchElementException, StaleElementReferenceException) as e:
+                print(f"Element issue (stale/not found) in main loop: {e}. Retrying...")
+                time.sleep(1) 
+                continue 
+            except Exception as e:
+                print(f"An unexpected error occurred in the main loop: {e}")
+                break # Exit loop for other errors
+
+    except Exception as e:
+        print(f"An error occurred in main execution: {e}")
+    finally:
+        if driver:
+            print("Quitting browser...")
+            driver.quit()
+            print("Browser closed.")
+
+
+        
+        
+    
 if __name__ == "__main__":
     try:
         main()
