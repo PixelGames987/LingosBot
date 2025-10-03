@@ -24,3 +24,6 @@ setup.bat
 
 Run with start.bat
 ```
+
+### Issues:
+Currently the bot sometimes hangs for a few seconds when a new word is detected.
