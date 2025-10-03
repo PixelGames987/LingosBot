@@ -143,6 +143,13 @@ def translate_without_word():
     # First click to submit the answer
     click_enter(5, wait_for_next_element_id="flashcard_error_correct")
     click_enter(5, wait_for_next_element_id="flashcard_main_text")
+    
+
+def new_word(native: str, foreign: str):
+    time.sleep(FORCE_WAIT_SEC)
+    add_db(native, foreign)
+    click_enter(5, wait_for_next_element_id="flashcard_main_text")
+    
 
 def main():
     global driver # Declare driver as global
@@ -175,7 +182,14 @@ def main():
 
                 elif found_element.tag_name == "span" and "NOWE SŁOWO!" in found_element.text.strip():
                     print("A new word found.")
-                    time.sleep(100)
+                    foreign = wait_for_element(By.ID, "new_teacher_main_text", 5, EC.visibility_of_element_located) # Wait is not needed here, but it's easier to reuse some code
+                    foreign_text = foreign.text[:500]
+
+                    native = wait_for_element(By.ID, "new_teacher_additional_text", 5, EC.visibility_of_element_located)
+                    native_text = native.text[:500]
+
+                    new_word(native_text, foreign_text)
+
                 else:
                     print(f"Unexpected element found: Tag={found_element.tag_name}, ID={found_element.get_attribute('id')}, Text='{found_element.text.strip()[:50]}'")
                     print("Breaking loop due to unhandled element type.")
@@ -199,8 +213,6 @@ def main():
             print("Quitting browser...")
             driver.quit()
             print("Browser closed.")
-
-
         
         
     
