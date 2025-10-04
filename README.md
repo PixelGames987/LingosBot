@@ -25,5 +25,5 @@ setup.bat
 Run with start.bat
 ```
 
-### Issues:
-The bot doesn't detect when the lesson ends to start a new one
+## Automated lessons:
+To make the script fully automatic, edit the main.py file and add your credentials, change AUTOMATIC_LOGIN to 1 and set the number of lessons to do per run.
