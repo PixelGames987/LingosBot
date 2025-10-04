@@ -8,6 +8,17 @@ import time
 import json
 import sys
 
+
+# ----------------------------------------------------------------
+AUTOMATED_LOGIN = 1 # Change to 1 for automated login
+LESSON_COUNT = 1 # Number of lessons to do per script run
+
+EMAIL = ""
+PASSWORD = ""
+# ----------------------------------------------------------------
+
+
+
 FORCE_WAIT_SEC = 0 # Wait between actions for debugging
 # Global driver
 driver = None
@@ -176,10 +187,36 @@ def new_word(native: str, foreign: str):
 
 def main():
     global driver
+    global LESSON_COUNT
+    global AUTOMATED_LOGIN
     try:
         open_website("https://lingos.pl")
-        print("Log in to the website and go to the learning page (e.g., 'Learn' section).")
-        input("Press ENTER after the lesson is loaded: ")
+        if AUTOMATED_LOGIN:
+            print(f"Automated login turned on, will do {LESSON_COUNT} lessons.")
+            login_button = wait_for_element(By.CSS_SELECTOR, ".btn.btn-primary.btn-sm.fs-sm.order-lg-3.d-none.d-lg-inline-flex", 20, EC.element_to_be_clickable)
+            login_button.click()
+
+            decline_button = wait_for_element(By.ID, "CybotCookiebotDialogBodyButtonDecline", 20, EC.element_to_be_clickable)
+            decline_button.click()
+            time.sleep(1) # The website takes time to register the cookie preference
+
+            # We don't need to wait since the cookie prompt displays after the login screen
+            email_field = driver.find_element(By.NAME, "login")
+            password_field = driver.find_element(By.NAME, "password")
+            login_button = driver.find_element(By.ID, "submit-login-button")
+
+            email_field.send_keys(EMAIL)
+            password_field.send_keys(PASSWORD)
+            login_button.click()
+
+            wait = WebDriverWait(driver, 20)
+            lesson_button = wait.until(EC.element_to_be_clickable((By.PARTIAL_LINK_TEXT, "UCZ SIĘ")))
+            lesson_button.click()
+
+
+        else:
+            print("Log in to the website and go to the learning page (e.g., 'Learn' section).")
+            input("Press ENTER after the lesson is loaded: ")
         
         # Initial check to ensure we are on a valid flashcard state
         try:
@@ -195,7 +232,8 @@ def main():
             sys.exit(1)
 
 
-        while True:
+        while LESSON_COUNT > 0:
+            
             # Define conditions for elements
             flashcard_title_condition = EC.visibility_of_element_located((By.ID, "flashcard_title_text")) # Translate task
             new_word_span_condition = EC.visibility_of_element_located((By.XPATH, "//span[normalize-space(text())='Nowe słowo!']")) # New word
@@ -238,6 +276,8 @@ def main():
             except Exception as e:
                 print(f"An unexpected error occurred in the main loop: {e}")
                 break # Exit loop for other errors
+
+            LESSON_COUNT -= 1
     except Exception as e:
         print(f"An error occurred in main execution: {e}")
     finally:
