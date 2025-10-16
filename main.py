@@ -11,7 +11,7 @@ import sys
 
 
 # ----------------------------------------------------------------
-AUTOMATED_LOGIN = 1  # Change to 1 for automated login
+AUTOMATED_LOGIN = 0  # Change to 1 for automated login
 LESSON_COUNT = 1     # Number of lessons to do per script run
 EMAIL = ""
 PASSWORD = ""
