@@ -21,6 +21,63 @@ FORCE_WAIT_SEC = 0   # Wait between actions for debugging
 
 driver = None
 
+
+def clean_db(remove_duplicates=True, sort_entries=True):
+    try:
+        # Try loading JSON
+        try:
+            with open("db.json", "r", encoding="utf-8") as db_file:
+                data = json.load(db_file)
+                if not isinstance(data, dict):
+                    print("Invalid JSON root (not an object). Resetting database.")
+                    data = {}
+        except (FileNotFoundError, json.JSONDecodeError):
+            print("db.json not found or invalid. Creating new database.")
+            data = {}
+
+        # Ensure "lingos" exists and is a list
+        if "lingos" not in data or not isinstance(data["lingos"], list):
+            print("Creating empty 'lingos' list in db.json.")
+            data["lingos"] = []
+
+        if not data["lingos"]:
+            print("Database is empty. Nothing to clean.")
+            with open("db.json", "w", encoding="utf-8") as db_file:
+                json.dump(data, db_file, indent=4, ensure_ascii=False)
+            return
+
+        seen = set()
+        cleaned = []
+        duplicates = 0
+
+        # Loop over every item in the db
+        for entry in data["lingos"]:
+            if not isinstance(entry, dict) or len(entry) != 1:
+                continue
+
+            question, answer = next(iter(entry.items()))
+            key = (question.strip(), answer.strip())
+
+            if key not in seen:
+                seen.add(key)
+                cleaned.append(entry)
+            else:
+                duplicates += 1
+
+        if sort_entries:
+            cleaned.sort(key=lambda e: next(iter(e.keys())).lower())
+
+        data["lingos"] = cleaned
+
+        with open("db.json", "w", encoding="utf-8") as db_file:
+            json.dump(data, db_file, indent=4, ensure_ascii=False)
+
+        print(f"Database cleaned successfully: {duplicates} duplicates removed. Total {len(cleaned)} entries remain.")
+
+    except Exception as e:
+        print(f"Error cleaning database: {e}")
+
+
 def open_website(url: str):
     global driver
     try:
@@ -321,6 +378,7 @@ def main():
 
 if __name__ == "__main__":
     try:
+        clean_db(True, True)
         main()
     except Exception as e:
         print(f"An error occurred in the script's main execution block: {e}")
