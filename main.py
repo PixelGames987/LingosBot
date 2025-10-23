@@ -4,19 +4,20 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, StaleElementReferenceException
+from dotenv import load_dotenv
 
 import time
 import json
 import sys
+import os
 
+load_dotenv()
 
-# ----------------------------------------------------------------
-AUTOMATED_LOGIN = 0  # Change to 1 for automated login
-LESSON_COUNT = 1     # Number of lessons to do per script run
-EMAIL = ""
-PASSWORD = ""
-FORCE_WAIT_SEC = 0   # Wait between actions for debugging
-# ----------------------------------------------------------------
+AUTOMATED_LOGIN = int(os.getenv("AUTOMATED_LOGIN"))
+LESSON_COUNT = int(os.getenv("LESSON_COUNT"))
+EMAIL = os.getenv("EMAIL")
+PASSWORD = os.getenv("PASSWORD")
+FORCE_WAIT_SEC = int(os.getenv("FORCE_WAIT_SEC"))
 
 
 driver = None

@@ -2,6 +2,7 @@
 setlocal
 
 echo {"lingos": []} > db.json
+echo "" > .env
 
 python -m venv venv
 

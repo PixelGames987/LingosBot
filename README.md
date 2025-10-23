@@ -10,6 +10,8 @@ cd LingosBot
 chmod +x setup.sh start.sh
 ./setup.sh
 
+Copy the contents of .env.example into .env and set your email, password and other parameters
+
 Run with ./start.sh
 ```
 
@@ -21,6 +23,8 @@ Open cmd and go to the desktop
 git clone https://github.com/PixelGames987/LingosBot
 cd LingosBot
 setup.bat
+
+Copy the contents of .env.example into .env and set your email, password and other parameters
 
 Run with start.bat
 ```
