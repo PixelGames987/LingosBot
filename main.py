@@ -10,6 +10,7 @@ import time
 import json
 import sys
 import os
+import random
 
 load_dotenv()
 
@@ -18,6 +19,7 @@ LESSON_COUNT = int(os.getenv("LESSON_COUNT"))
 EMAIL = os.getenv("EMAIL")
 PASSWORD = os.getenv("PASSWORD")
 FORCE_WAIT_SEC = int(os.getenv("FORCE_WAIT_SEC"))
+CHANCE_OF_PASSING = float(os.getenv("CHANCE_OF_PASSING"))
 
 
 driver = None
@@ -208,13 +210,16 @@ def translate_without_word():
         print("Clicking Enter to dismiss correction/proceed to answer input if needed.")
         click_enter_button_only(5)
     else:
-        # If translation was found in the DB, use it
-        translation_to_enter = translation_from_db
-        print(f"Using translation from DB: {translation_to_enter}")
-
-    if not translation_to_enter:
-        print("No translation available to enter. This should not happen if DB or page provided it.")
-        return
+        chance = random.uniform(0.0, CHANCE_OF_PASSING)
+        print(f"Chance: {chance}")
+        if chance >= 1:
+            # If the code's randomness chooses to fail this task, enter an empty string
+            translation_to_enter = ""
+            print(f"Using an empty translation")
+        else:
+            # If translation was found in the DB, use it
+            translation_to_enter = translation_from_db
+            print(f"Using translation from DB: {translation_to_enter}")
 
     # Enter the translation into the answer box
     try:
