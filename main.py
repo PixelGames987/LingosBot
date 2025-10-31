@@ -20,6 +20,7 @@ EMAIL = os.getenv("EMAIL")
 PASSWORD = os.getenv("PASSWORD")
 FORCE_WAIT_SEC = int(os.getenv("FORCE_WAIT_SEC"))
 CHANCE_OF_PASSING = float(os.getenv("CHANCE_OF_PASSING"))
+HEADLESS = int(os.getenv("HEADLESS"))
 
 
 driver = None
@@ -85,7 +86,10 @@ def open_website(url: str):
     global driver
     try:
         options = Options()
-        options.add_argument("--no-sandbox")
+        if HEADLESS:
+            options.add_argument("--headless")
+        else:
+            options.add_argument("--no-sandbox")
         # Add a common user-agent to avoid detection
         options.set_preference("general.useragent.override", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0")
 
