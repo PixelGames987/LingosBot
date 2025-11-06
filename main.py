@@ -197,6 +197,44 @@ def scrape_translations(timeout: int=3):
     for i, url in enumerate(chapter_urls):
         print(f"Chapter url: {url}")
 
+        # Go into that section
+        driver.get(url)
+
+        # Define locators
+        container_locator = (By.CSS_SELECTOR, "div.card.rounded-3")
+        translation1_locator = (By.CSS_SELECTOR, ".flashcard-border-end")
+        translation2_locator = (By.CSS_SELECTOR, ".flashcard-border-start")
+
+        try:
+            WebDriverWait(driver, timeout).until(
+                EC.presence_of_element_located(container_locator)
+            )
+            print("Flashcard items found.")
+            containers = driver.find_elements(*container_locator)
+            print(f"Found {len(containers)} items to process.")
+
+            for i, container in enumerate(containers):
+                try:
+                    element1 = container.find_element(*translation1_locator)
+                    element2 = container.find_element(*translation2_locator)
+    
+                    # Extract the text and clean it up
+                    element1 = element1.text.strip()
+                    element2 = element2.text.strip()
+
+                    add_db(element1, element2)
+            
+                    print(f"Item {i + 1}: OK")
+
+                except NoSuchElementException:
+                    print("Could not locate elements in containers")
+                    continue
+
+        except TimeoutException:
+            print("Error: Timed out while waiting for containers")
+
+        driver.get("https://lingos.pl/student-confirmed/wordsets")
+
     return None
 
 
@@ -336,7 +374,7 @@ def main():
         else:
             print("Log in to the website and go to the learning page (e.g., 'Learn' section).")
             input("Press ENTER after the lesson is loaded: ")
-            scrape_translations(3)
+            scrape_translations(10)
 
         # --- Lesson Loop ---
         lessons_to_do = LESSON_COUNT if AUTOMATED_LOGIN else 1
