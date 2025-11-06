@@ -171,9 +171,11 @@ def query_db(question: str):
 
 
 def scrape_translations(timeout: int=3):
-    # Assuming the web driver is at the root of the page after login
-    
+    # Assuming the lessons is in a loaded state
     time.sleep(FORCE_WAIT_SEC)
+
+    driver.back()
+    
     try:
         wordsets_button = wait_for_element(By.ID, "menu-big-item-icon-1", timeout, EC.element_to_be_clickable)
         wordsets_button.click()
@@ -235,7 +237,12 @@ def scrape_translations(timeout: int=3):
 
         driver.get("https://lingos.pl/student-confirmed/wordsets")
 
-    return None
+    clean_db(True, True)
+    driver.get("https://lingos.pl/student-confirmed/group")
+
+    wait = WebDriverWait(driver, 20)
+    lesson_button = wait.until(EC.element_to_be_clickable((By.PARTIAL_LINK_TEXT, "UCZ SIĘ")))
+    lesson_button.click()
 
 
 def translate_without_word():
@@ -374,8 +381,8 @@ def main():
         else:
             print("Log in to the website and go to the learning page (e.g., 'Learn' section).")
             input("Press ENTER after the lesson is loaded: ")
-            scrape_translations(10)
 
+        scrape_translations(10)
         # --- Lesson Loop ---
         lessons_to_do = LESSON_COUNT if AUTOMATED_LOGIN else 1
         for i in range(lessons_to_do):
