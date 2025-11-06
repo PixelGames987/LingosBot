@@ -124,7 +124,7 @@ def click_enter_button_only(timeout: int = 5):
 
 
 def add_db(question: str, answer: str):
-    time.sleep(FORCE_WAIT_SEC)
+    #time.sleep(FORCE_WAIT_SEC)
     question_str = question.text if hasattr(question, 'text') else str(question)
     answer_str = answer.text if hasattr(answer, 'text') else str(answer)
     new_entry = {question_str: answer_str}
@@ -172,7 +172,7 @@ def query_db(question: str):
 
 def scrape_translations(timeout: int=3):
     # Assuming the lessons is in a loaded state
-    time.sleep(FORCE_WAIT_SEC)
+    #time.sleep(FORCE_WAIT_SEC)
 
     driver.back()
     
@@ -196,7 +196,11 @@ def scrape_translations(timeout: int=3):
     chapter_elements = driver.find_elements(*chapter_link_locator)
     chapter_urls = [element.get_attribute('href') for element in chapter_elements] # Get all urls with translations in one list
 
-    for i, url in enumerate(chapter_urls):
+    # We need to remove the duplicates, since it's the easiest way to only have one chapter in the db
+    unique_urls = list(dict.fromkeys(chapter_urls))
+    print("Removed duplicates in chapter_urls")
+
+    for i, url in enumerate(unique_urls):
         print(f"Chapter url: {url}")
 
         # Go into that section
@@ -224,7 +228,9 @@ def scrape_translations(timeout: int=3):
                     element1 = element1.text.strip()
                     element2 = element2.text.strip()
 
+                    # Add the translation in two ways to the db
                     add_db(element1, element2)
+                    add_db(element2, element1)
             
                     print(f"Item {i + 1}: OK")
 
