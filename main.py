@@ -170,6 +170,36 @@ def query_db(question: str):
         return None
 
 
+def scrape_translations(timeout: int=3):
+    # Assuming the web driver is at the root of the page after login
+    
+    time.sleep(FORCE_WAIT_SEC)
+    try:
+        wordsets_button = wait_for_element(By.ID, "menu-big-item-icon-1", timeout, EC.element_to_be_clickable)
+        wordsets_button.click()
+        print("Clicked the wordsets button")
+    except Exception as e:
+        print(f"Error clicking wordsets button: {e}")
+        raise
+
+    chapter_link_locator = (By.CSS_SELECTOR, 'a[href^="/student-confirmed/wordset/"]')
+    try:
+        WebDriverWait(driver, timeout).until(
+            EC.presence_of_element_located(chapter_link_locator)
+        )
+        print("Found chapter links on the page.")
+    except TimeoutException:
+        print("Error: Could not find any chapter links within the time limit.")
+    
+    chapter_elements = driver.find_elements(*chapter_link_locator)
+    chapter_urls = [element.get_attribute('href') for element in chapter_elements] # Get all urls with translations in one list
+
+    for i, url in enumerate(chapter_urls):
+        print(f"Chapter url: {url}")
+
+    return None
+
+
 def translate_without_word():
     time.sleep(FORCE_WAIT_SEC)
 
@@ -306,6 +336,7 @@ def main():
         else:
             print("Log in to the website and go to the learning page (e.g., 'Learn' section).")
             input("Press ENTER after the lesson is loaded: ")
+            scrape_translations(3)
 
         # --- Lesson Loop ---
         lessons_to_do = LESSON_COUNT if AUTOMATED_LOGIN else 1
