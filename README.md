@@ -29,5 +29,19 @@ Copy the contents of .env.example into .env and set your email, password and oth
 Run with start.bat
 ```
 
-## Automated lessons:
-To make the script fully automatic, edit the main.py file and add your credentials, change AUTOMATIC_LOGIN to 1 and set the number of lessons to do per run.
+## Env variables:
+LESSON_COUNT - (int) Number of lessons to do per session
+
+CHANCE_OF_PASSING - (float) Chance of the bot to be correct/incorrect. 1 - correct everytime, 3 - correct every 3 questions, etc.
+
+EMAIL - (str) Your email
+
+PASSWORD - (str) Your password
+
+AUTOMATED_LOGIN - (0/1) Should the code log in by itself using the specified credentials?
+
+HEADLESS - (0/1) Should the browser run in a headless mode? (without a window)
+
+CLEAR_DB_BEFORE_SESSION - (0/1) Should the code remove all DB entries before every session?
+
+FORCE_WAIT_SEC - (float) For debugging. How long should the code wait between actions

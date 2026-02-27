@@ -18,10 +18,10 @@ AUTOMATED_LOGIN = int(os.getenv("AUTOMATED_LOGIN"))
 LESSON_COUNT = int(os.getenv("LESSON_COUNT"))
 EMAIL = os.getenv("EMAIL")
 PASSWORD = os.getenv("PASSWORD")
-FORCE_WAIT_SEC = int(os.getenv("FORCE_WAIT_SEC"))
+FORCE_WAIT_SEC = float(os.getenv("FORCE_WAIT_SEC"))
 CHANCE_OF_PASSING = float(os.getenv("CHANCE_OF_PASSING"))
 HEADLESS = int(os.getenv("HEADLESS"))
-CLEAR_DB_BEFORE_SESSION = bool(os.getenv("CLEAR_DB_BEFORE_SESSION"))
+CLEAR_DB_BEFORE_SESSION = int(os.getenv("CLEAR_DB_BEFORE_SESSION"))
 
 driver = None
 
