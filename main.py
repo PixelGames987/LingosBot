@@ -21,9 +21,31 @@ PASSWORD = os.getenv("PASSWORD")
 FORCE_WAIT_SEC = int(os.getenv("FORCE_WAIT_SEC"))
 CHANCE_OF_PASSING = float(os.getenv("CHANCE_OF_PASSING"))
 HEADLESS = int(os.getenv("HEADLESS"))
-
+CLEAR_DB_BEFORE_SESSION = bool(os.getenv("CLEAR_DB_BEFORE_SESSION"))
 
 driver = None
+
+
+def remove_db():
+    # This function is essential when running this bot in prod
+    print(f"REMOVING ALL DATABASE ENTRIES...")
+
+    try:
+        with open("db.json", "r+") as db_file:
+            data = json.load(db_file)
+            data["lingos"] = []
+            db_file.seek(0)  # Move pointer to start of file
+            json.dump(data, db_file, indent=4)
+            db_file.truncate()  # Remove remaining data
+
+    except FileNotFoundError:
+        print("db.json not found or invalid. Creating new database.")
+        with open("db.json", "w") as db_file:
+            data = {"lingos": []}
+            json.dump(data, db_file, indent=4)
+
+    except Exception as e:
+        print(f"Error DB entries: {e}")
 
 
 def clean_db(remove_duplicates=True, sort_entries=True):
@@ -124,7 +146,7 @@ def click_enter_button_only(timeout: int = 5):
 
 
 def add_db(question: str, answer: str):
-    #time.sleep(FORCE_WAIT_SEC)
+    time.sleep(FORCE_WAIT_SEC)
     question_str = question.text if hasattr(question, 'text') else str(question)
     answer_str = answer.text if hasattr(answer, 'text') else str(answer)
     new_entry = {question_str: answer_str}
@@ -172,7 +194,7 @@ def query_db(question: str):
 
 def scrape_translations(timeout: int=3):
     # Assuming the lessons is in a loaded state
-    #time.sleep(FORCE_WAIT_SEC)
+    time.sleep(FORCE_WAIT_SEC)
 
     driver.back()
     
@@ -470,7 +492,11 @@ def main():
 
 if __name__ == "__main__":
     try:
-        clean_db(True, True)
+        if CLEAR_DB_BEFORE_SESSION:
+            remove_db()
+        else:
+            clean_db(True, True)
+
         main()
     except Exception as e:
         print(f"An error occurred in the script's main execution block: {e}")
